@@ -1,19 +1,32 @@
 """
 Skin Triage API — entry point.
 
-Step 1 (current): a minimal, healthy server with a versioned API and a
-/health check. Accounts, database, and model integration are added in later
-steps. The point of this step is a solid, tested, deployable foundation.
+Step 2 (current): the server now supports user accounts — sign up, log in,
+and a 'who am I' check — backed by a database. Saved scan history and the
+model integration are added in later steps.
 """
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
+from app.database import init_db
+from app.routers import auth
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Create database tables when the server starts."""
+    await init_db()
+    yield
+
 
 app = FastAPI(
     title=settings.app_name,
-    version="0.1.0",
+    version="0.2.0",
     description="Backend for the skin-disease triage app: accounts + saved scan history.",
+    lifespan=lifespan,
 )
 
 # Allow a browser frontend to call this API.
@@ -24,6 +37,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.include_router(auth.router)
 
 
 @app.get("/")
