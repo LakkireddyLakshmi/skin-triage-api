@@ -33,3 +33,15 @@ class Token(BaseModel):
 
     access_token: str
     token_type: str = "bearer"
+
+
+class ScanRead(BaseModel):
+    """A saved scan as returned to the user."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    filename: str
+    predicted_label: str
+    confidence: float
+    created_at: datetime

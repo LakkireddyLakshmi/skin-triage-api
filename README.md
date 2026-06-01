@@ -65,7 +65,7 @@ docker compose up --build
 Built in small, reviewable steps:
 
 - [x] **Step 1 — Skeleton:** healthy FastAPI server, tests, Docker, green CI
-- [ ] **Step 2 — Accounts:** sign up, log in, log out
-- [ ] **Step 3 — Database:** persist users and their scans
-- [ ] **Step 4 — Predictions:** proxy uploads to the Hugging Face model, save results
+- [x] **Step 2 — Accounts:** sign up, log in, JWT auth
+- [x] **Step 3 — Scan history:** upload a photo, save it, list/view your scans (ownership enforced)
+- [ ] **Step 4 — Predictions:** proxy uploads to the Hugging Face model, save real results
 - [ ] **Step 5 — Polish:** full test coverage, deploy live, frontend
