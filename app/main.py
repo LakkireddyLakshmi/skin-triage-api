@@ -6,13 +6,18 @@ and a 'who am I' check — backed by a database. Saved scan history and the
 model integration are added in later steps.
 """
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 
 from app.config import settings
 from app.database import init_db
 from app.routers import auth, scans
+
+STATIC_DIR = Path(__file__).parent / "static"
 
 
 @asynccontextmanager
@@ -42,13 +47,17 @@ app.include_router(auth.router)
 app.include_router(scans.router)
 
 
-@app.get("/")
-def root():
-    """Friendly landing response so visitors know the API is alive."""
-    return {"name": settings.app_name, "status": "ok", "docs": "/docs"}
-
-
 @app.get("/health")
 def health():
     """Health check used by tests, Docker, and the deploy platform."""
     return {"status": "healthy", "environment": settings.environment}
+
+
+@app.get("/", include_in_schema=False)
+def home():
+    """Serve the single-page web app."""
+    return FileResponse(STATIC_DIR / "index.html")
+
+
+# CSS/JS assets live under /static/...
+app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")

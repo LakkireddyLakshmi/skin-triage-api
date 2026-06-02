@@ -6,10 +6,11 @@ from app.main import app
 client = TestClient(app)
 
 
-def test_root_returns_ok():
+def test_root_serves_the_web_page():
     response = client.get("/")
     assert response.status_code == 200
-    assert response.json()["status"] == "ok"
+    assert "text/html" in response.headers["content-type"]
+    assert "Skin Triage" in response.text
 
 
 def test_health_is_healthy():

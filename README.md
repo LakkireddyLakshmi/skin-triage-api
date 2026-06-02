@@ -70,4 +70,15 @@ Built in small, reviewable steps:
 - [x] **Step 2 — Accounts:** sign up, log in, JWT auth
 - [x] **Step 3 — Scan history:** upload a photo, save it, list/view your scans (ownership enforced)
 - [x] **Step 4 — Predictions:** uploads are sent to the live Hugging Face model; the real class + confidence are saved
-- [ ] **Step 5 — Polish:** full test coverage, deploy live, frontend
+- [x] **Step 5 — Polish:** web UI, public on GitHub with green CI, one-click deploy config
+
+## Web UI
+
+A small built-in web page (no separate frontend to host) is served at `/`:
+sign up, log in, upload a photo, see the result, and browse your saved history.
+Assets live in [`app/static/`](app/static/).
+
+## Deploy
+
+One-click deploy to Render (API + free Postgres) via the included
+[`render.yaml`](render.yaml). Full instructions in [DEPLOY.md](DEPLOY.md).

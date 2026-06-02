@@ -1,0 +1,27 @@
+# Render Blueprint — deploys the API + a free Postgres database in one click.
+# In Render: New + → "Blueprint" → connect this repo → Apply.
+services:
+  - type: web
+    name: skin-triage-api
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: PYTHON_VERSION
+        value: "3.12.7"
+      # A strong secret is generated automatically (used to sign login tokens).
+      - key: SECRET_KEY
+        generateValue: true
+      # The database URL is injected from the Postgres instance below.
+      - key: DATABASE_URL
+        fromDatabase:
+          name: skin-triage-db
+          property: connectionString
+
+databases:
+  - name: skin-triage-db
+    plan: free
