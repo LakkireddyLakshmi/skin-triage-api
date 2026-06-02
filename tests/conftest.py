@@ -5,7 +5,13 @@ from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from sqlalchemy.pool import StaticPool
 
 from app.database import Base, get_db
+from app.deps import get_predictor
 from app.main import app
+
+
+async def fake_predict(image_bytes: bytes) -> tuple[str, float]:
+    """Offline stand-in for the real model, so tests are fast and deterministic."""
+    return ("Melanocytic Nevi", 0.93)
 
 
 @pytest_asyncio.fixture
@@ -27,6 +33,7 @@ async def client():
             yield session
 
     app.dependency_overrides[get_db] = override_get_db
+    app.dependency_overrides[get_predictor] = lambda: fake_predict
 
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as ac:

@@ -23,7 +23,9 @@ async def test_upload_creates_and_saves_a_scan(client):
     assert res.status_code == 201
     body = res.json()
     assert body["filename"] == "mole.jpg"
-    assert "predicted_label" in body
+    # The (faked) model result is saved on the scan.
+    assert body["predicted_label"] == "Melanocytic Nevi"
+    assert body["confidence"] == 0.93
     assert "id" in body
 
 

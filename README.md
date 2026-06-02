@@ -67,5 +67,5 @@ Built in small, reviewable steps:
 - [x] **Step 1 — Skeleton:** healthy FastAPI server, tests, Docker, green CI
 - [x] **Step 2 — Accounts:** sign up, log in, JWT auth
 - [x] **Step 3 — Scan history:** upload a photo, save it, list/view your scans (ownership enforced)
-- [ ] **Step 4 — Predictions:** proxy uploads to the Hugging Face model, save real results
+- [x] **Step 4 — Predictions:** uploads are sent to the live Hugging Face model; the real class + confidence are saved
 - [ ] **Step 5 — Polish:** full test coverage, deploy live, frontend
