@@ -55,8 +55,14 @@ def health():
 
 @app.get("/", include_in_schema=False)
 def home():
-    """Serve the single-page web app."""
-    return FileResponse(STATIC_DIR / "index.html")
+    """Serve the single-page web app.
+
+    no-cache so browsers always re-fetch the page (and thus the versioned
+    asset URLs), avoiding stale-JavaScript after a deploy.
+    """
+    return FileResponse(
+        STATIC_DIR / "index.html", headers={"Cache-Control": "no-cache"}
+    )
 
 
 # CSS/JS assets live under /static/...
