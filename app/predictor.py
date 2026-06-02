@@ -89,11 +89,12 @@ def _predict_sync(image_bytes: bytes) -> tuple[str, float]:
         os.unlink(tmp_path)
 
 
-async def predict(image_bytes: bytes, attempts: int = 6) -> tuple[str, float]:
+async def predict(image_bytes: bytes, attempts: int = 12) -> tuple[str, float]:
     """Return (predicted_label, confidence). Retries to allow the Space to wake.
 
-    A fully-asleep Hugging Face Space can take ~60-90s to start, so we retry
-    with a wait between attempts rather than failing on the first miss.
+    A fully-asleep Hugging Face Space can take a couple of minutes to start.
+    This runs in a background task (not a blocking request), so we can afford
+    to wait patiently: ~12 attempts x 15s.
     """
     if not image_bytes:
         raise ValueError("Empty image upload.")

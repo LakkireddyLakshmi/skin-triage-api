@@ -76,6 +76,8 @@ Built in small, reviewable steps:
 - [x] **Step 3 — Scan history:** upload a photo, save it, list/view your scans (ownership enforced)
 - [x] **Step 4 — Predictions:** uploads are sent to the live Hugging Face model; the real class + confidence are saved
 - [x] **Step 5 — Polish:** web UI, public on GitHub with green CI, one-click deploy config
+- [x] **Step 6 — Async predictions:** uploads return instantly; the model runs in a
+  background task and the page polls for the result, so slow cold-starts never time out
 
 ## Web UI
 

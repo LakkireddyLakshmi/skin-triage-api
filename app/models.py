@@ -34,8 +34,12 @@ class Scan(Base):
         ForeignKey("users.id", ondelete="CASCADE"), index=True, nullable=False
     )
     filename: Mapped[str] = mapped_column(String, nullable=False)
-    predicted_label: Mapped[str] = mapped_column(String, nullable=False)
-    confidence: Mapped[float] = mapped_column(Float, nullable=False)
+    # Lifecycle: "processing" -> "done" | "failed". The prediction runs in a
+    # background task, so a scan starts with no label and is filled in later.
+    status: Mapped[str] = mapped_column(String, default="processing", nullable=False)
+    predicted_label: Mapped[str] = mapped_column(String, default="", nullable=False)
+    confidence: Mapped[float] = mapped_column(Float, default=0.0, nullable=False)
+    error: Mapped[str | None] = mapped_column(String, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )

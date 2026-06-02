@@ -7,6 +7,7 @@ from sqlalchemy.pool import StaticPool
 from app.database import Base, get_db
 from app.deps import get_predictor
 from app.main import app
+from app.routers import scans as scans_router
 
 
 async def fake_predict(image_bytes: bytes) -> tuple[str, float]:
@@ -35,9 +36,15 @@ async def client():
     app.dependency_overrides[get_db] = override_get_db
     app.dependency_overrides[get_predictor] = lambda: fake_predict
 
+    # The background task opens its own session via AsyncSessionLocal — point
+    # that at the test database too, then restore it afterwards.
+    original_session_factory = scans_router.AsyncSessionLocal
+    scans_router.AsyncSessionLocal = test_session
+
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
         yield ac
 
+    scans_router.AsyncSessionLocal = original_session_factory
     app.dependency_overrides.clear()
     await engine.dispose()

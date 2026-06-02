@@ -91,14 +91,30 @@ async function loadHistory() {
     }
     list.innerHTML = scans
       .map((s) => {
-        const pct = (s.confidence * 100).toFixed(1);
         const date = new Date(s.created_at).toLocaleString();
-        return `<li><span>${s.predicted_label} <small>(${pct}%)</small></span><span class="h-date">${date}</span></li>`;
+        let label;
+        if (s.status === "processing") label = "⏳ Processing…";
+        else if (s.status === "failed") label = "⚠️ Failed";
+        else label = `${s.predicted_label} <small>(${(s.confidence * 100).toFixed(1)}%)</small>`;
+        return `<li><span>${label}</span><span class="h-date">${date}</span></li>`;
       })
       .join("");
   } catch (err) {
     list.innerHTML = `<li class="history-empty">${err.message}</li>`;
   }
+}
+
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+// Poll a scan until it finishes processing (or we give up after ~4 min).
+async function waitForResult(scanId) {
+  for (let i = 0; i < 60; i++) {
+    const scan = await api(`/scans/${scanId}`, { auth: true });
+    if (scan.status === "done") return scan;
+    if (scan.status === "failed") throw new Error(scan.error || "Analysis failed.");
+    await sleep(4000);
+  }
+  throw new Error("Still processing — the model is taking unusually long. Try again shortly.");
 }
 
 $("scan-form").onsubmit = async (e) => {
@@ -107,12 +123,15 @@ $("scan-form").onsubmit = async (e) => {
   const fileInput = $("file");
   if (!fileInput.files.length) return;
   btn.disabled = true;
-  setMsg($("scan-msg"), "Analyzing… (the model may take up to a minute to wake up)", "");
   $("result").classList.add("hidden");
+  setMsg($("scan-msg"), "Analyzing… the model may take up to a minute to wake up.", "");
   try {
     const fd = new FormData();
     fd.append("file", fileInput.files[0]);
-    const scan = await api("/scans", { method: "POST", body: fd, auth: true });
+    // Returns immediately with a "processing" scan; then we poll for the result.
+    const pending = await api("/scans", { method: "POST", body: fd, auth: true });
+    loadHistory();
+    const scan = await waitForResult(pending.id);
     $("result-label").textContent = scan.predicted_label;
     $("result-conf").textContent = (scan.confidence * 100).toFixed(1) + "% confidence";
     $("result").classList.remove("hidden");
@@ -121,6 +140,7 @@ $("scan-form").onsubmit = async (e) => {
     loadHistory();
   } catch (err) {
     setMsg($("scan-msg"), err.message, "err");
+    loadHistory();
   } finally {
     btn.disabled = false;
   }

@@ -42,6 +42,8 @@ class ScanRead(BaseModel):
 
     id: int
     filename: str
+    status: str  # "processing" | "done" | "failed"
     predicted_label: str
     confidence: float
+    error: str | None = None
     created_at: datetime
