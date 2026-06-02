@@ -1,5 +1,7 @@
 # Skin Triage API
 
+[![CI](https://github.com/LakkireddyLakshmi/skin-triage-api/actions/workflows/ci.yml/badge.svg)](https://github.com/LakkireddyLakshmi/skin-triage-api/actions/workflows/ci.yml)
+
 A backend that turns a skin-disease classification model into a **real app with user accounts and saved scan history**.
 
 The deep-learning model (a DenseNet-201 + ViT-B16 ensemble, 87.9% test accuracy)
