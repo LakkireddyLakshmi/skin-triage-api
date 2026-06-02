@@ -1,24 +1,23 @@
-// Tiny vanilla-JS frontend for the Skin Triage API.
+// Vanilla-JS frontend for the Skin Triage API.
 // Talks to the same server it is served from, so no base URL / CORS needed.
 
 const TOKEN_KEY = "skin_triage_token";
 const $ = (id) => document.getElementById(id);
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 let mode = "login"; // "login" | "register"
 
 // ---- helpers ----
-function token() {
-  return localStorage.getItem(TOKEN_KEY);
-}
+const token = () => localStorage.getItem(TOKEN_KEY);
+
 function setMsg(el, text, kind) {
   el.textContent = text;
   el.className = "msg" + (kind ? " " + kind : "");
 }
+
 async function api(path, { method = "GET", body, auth = false } = {}) {
   const headers = {};
   if (auth) headers["Authorization"] = "Bearer " + token();
-  // JSON bodies are strings → declare the type. FormData (file upload) must be
-  // left alone so the browser sets the multipart boundary itself.
   if (typeof body === "string") headers["Content-Type"] = "application/json";
   const res = await fetch(path, { method, headers, body });
   const data = await res.json().catch(() => ({}));
@@ -44,7 +43,7 @@ function setMode(next) {
   const login = next === "login";
   $("tab-login").classList.toggle("active", login);
   $("tab-register").classList.toggle("active", !login);
-  $("auth-submit").textContent = login ? "Log in" : "Sign up";
+  $("auth-submit").textContent = login ? "Log in" : "Create account";
   setMsg($("auth-msg"), "");
 }
 $("tab-login").onclick = () => setMode("login");
@@ -58,7 +57,7 @@ $("auth-form").onsubmit = async (e) => {
   const payload = JSON.stringify({ email: $("email").value, password: $("password").value });
   try {
     if (mode === "register") {
-      await api("/auth/register", { method: "POST", body: payload, });
+      await api("/auth/register", { method: "POST", body: payload });
       setMsg($("auth-msg"), "Account created! Logging you in…", "ok");
     }
     const data = await api("/auth/login", { method: "POST", body: payload });
@@ -71,14 +70,47 @@ $("auth-form").onsubmit = async (e) => {
   }
 };
 
+// ---- file preview + drag & drop ----
+const fileInput = $("file");
+const dropzone = $("dropzone");
+
+function showPreview(file) {
+  if (!file) return;
+  const url = URL.createObjectURL(file);
+  $("preview").src = url;
+  $("preview").classList.remove("hidden");
+  $("dz-prompt").classList.add("hidden");
+}
+fileInput.addEventListener("change", () => showPreview(fileInput.files[0]));
+
+["dragenter", "dragover"].forEach((ev) =>
+  dropzone.addEventListener(ev, (e) => { e.preventDefault(); dropzone.classList.add("drag"); })
+);
+["dragleave", "drop"].forEach((ev) =>
+  dropzone.addEventListener(ev, (e) => { e.preventDefault(); dropzone.classList.remove("drag"); })
+);
+dropzone.addEventListener("drop", (e) => {
+  const file = e.dataTransfer.files[0];
+  if (file) {
+    const dt = new DataTransfer();
+    dt.items.add(file);
+    fileInput.files = dt.files;
+    showPreview(file);
+  }
+});
+
 // ---- logged-in actions ----
 async function loadMe() {
   try {
     const me = await api("/auth/me", { auth: true });
-    $("who").textContent = "Signed in as " + me.email;
+    $("who").textContent = me.email;
   } catch {
     logout();
   }
+}
+
+function statusDot(s) {
+  return `<span class="dot ${s}"></span>`;
 }
 
 async function loadHistory() {
@@ -93,9 +125,9 @@ async function loadHistory() {
       .map((s) => {
         const date = new Date(s.created_at).toLocaleString();
         let label;
-        if (s.status === "processing") label = "⏳ Processing…";
-        else if (s.status === "failed") label = "⚠️ Failed";
-        else label = `${s.predicted_label} <small>(${(s.confidence * 100).toFixed(1)}%)</small>`;
+        if (s.status === "processing") label = `${statusDot("processing")}<span class="h-status">Processing…</span>`;
+        else if (s.status === "failed") label = `${statusDot("failed")}<span class="h-status">Failed</span>`;
+        else label = `${statusDot("done")}<span class="h-status">${s.predicted_label} <small>(${(s.confidence * 100).toFixed(1)}%)</small></span>`;
         return `<li><span>${label}</span><span class="h-date">${date}</span></li>`;
       })
       .join("");
@@ -104,9 +136,20 @@ async function loadHistory() {
   }
 }
 
-const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+function renderResult(scan) {
+  const pct = (scan.confidence * 100).toFixed(1);
+  $("result-label").textContent = scan.predicted_label;
+  $("result-conf").textContent = pct + "%";
+  // animate the bar after a tick so the transition runs
+  $("result-bar").style.width = "0%";
+  requestAnimationFrame(() => { $("result-bar").style.width = pct + "%"; });
+  const danger = /cancer|melanoma/i.test(scan.predicted_label);
+  $("result-pill").textContent = danger ? "See a doctor" : "Triage";
+  $("result-pill").className = "pill" + (danger ? " danger" : "");
+  $("result").classList.remove("hidden");
+}
 
-// Poll a scan until it finishes processing (or we give up after ~4 min).
+// Poll a scan until it finishes (or we give up after ~4 min).
 async function waitForResult(scanId) {
   for (let i = 0; i < 60; i++) {
     const scan = await api(`/scans/${scanId}`, { auth: true });
@@ -120,23 +163,18 @@ async function waitForResult(scanId) {
 $("scan-form").onsubmit = async (e) => {
   e.preventDefault();
   const btn = $("scan-submit");
-  const fileInput = $("file");
   if (!fileInput.files.length) return;
   btn.disabled = true;
   $("result").classList.add("hidden");
-  setMsg($("scan-msg"), "Analyzing… the model may take up to a minute to wake up.", "");
+  setMsg($("scan-msg"), "Analyzing… the model may take up to a minute to wake up.", "work");
   try {
     const fd = new FormData();
     fd.append("file", fileInput.files[0]);
-    // Returns immediately with a "processing" scan; then we poll for the result.
     const pending = await api("/scans", { method: "POST", body: fd, auth: true });
     loadHistory();
     const scan = await waitForResult(pending.id);
-    $("result-label").textContent = scan.predicted_label;
-    $("result-conf").textContent = (scan.confidence * 100).toFixed(1) + "% confidence";
-    $("result").classList.remove("hidden");
+    renderResult(scan);
     setMsg($("scan-msg"), "Saved to your history.", "ok");
-    fileInput.value = "";
     loadHistory();
   } catch (err) {
     setMsg($("scan-msg"), err.message, "err");

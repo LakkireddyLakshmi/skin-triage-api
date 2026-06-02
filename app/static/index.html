@@ -3,52 +3,101 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Skin Triage</title>
-  <link rel="stylesheet" href="/static/style.css?v=0.6.0" />
+  <title>Skin Triage · AI Dermatology Assistant</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/style.css?v=0.7.0" />
 </head>
 <body>
-  <header>
-    <h1>🩺 Skin Triage</h1>
-    <p class="tagline">Upload a skin photo for an AI triage estimate — and keep a private history of your scans.</p>
+  <!-- animated aurora background -->
+  <div class="aurora" aria-hidden="true">
+    <span class="blob blob-1"></span>
+    <span class="blob blob-2"></span>
+    <span class="blob blob-3"></span>
+  </div>
+
+  <header class="site-header">
+    <div class="brand">
+      <span class="brand-mark">
+        <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M6 3v6a6 6 0 0 0 12 0V3" />
+          <path d="M6 3H4M18 3h2" />
+          <path d="M12 15v3a4 4 0 0 0 8 0v-1" />
+          <circle cx="20" cy="13" r="2" />
+        </svg>
+      </span>
+      <span class="brand-name">Skin<span>Triage</span></span>
+    </div>
+    <span class="badge-ai">✦ AI-powered</span>
   </header>
 
   <main>
-    <!-- Logged-out view: sign up / log in -->
-    <section id="auth-view" class="card">
+    <section class="hero">
+      <h1>Know your skin,<br /><span class="grad">in seconds.</span></h1>
+      <p>Upload a photo and get an instant AI triage estimate across 7 skin conditions — with a private history of every scan.</p>
+    </section>
+
+    <!-- Logged-out: auth -->
+    <section id="auth-view" class="card glass hidden">
       <div class="tabs">
         <button id="tab-login" class="tab active">Log in</button>
-        <button id="tab-register" class="tab">Sign up</button>
+        <button id="tab-register" class="tab">Create account</button>
       </div>
       <form id="auth-form">
-        <label>Email<input type="email" id="email" required autocomplete="email" /></label>
-        <label>Password<input type="password" id="password" required minlength="8" autocomplete="current-password" placeholder="at least 8 characters" /></label>
-        <button type="submit" id="auth-submit">Log in</button>
+        <label class="field">Email
+          <input type="email" id="email" required autocomplete="email" placeholder="you@example.com" />
+        </label>
+        <label class="field">Password
+          <input type="password" id="password" required minlength="8" autocomplete="current-password" placeholder="at least 8 characters" />
+        </label>
+        <button type="submit" id="auth-submit" class="btn-primary">Log in</button>
       </form>
       <p id="auth-msg" class="msg"></p>
     </section>
 
-    <!-- Logged-in view: upload + history -->
+    <!-- Logged-in: app -->
     <section id="app-view" class="hidden">
-      <div class="topbar">
-        <span id="who"></span>
+      <div class="topbar glass">
+        <span id="who" class="who"></span>
         <button id="logout" class="link">Log out</button>
       </div>
 
-      <div class="card">
-        <h2>New scan</h2>
+      <div class="card glass">
+        <h2 class="card-title">New scan</h2>
         <form id="scan-form">
-          <input type="file" id="file" accept="image/*" required />
-          <button type="submit" id="scan-submit">Analyze</button>
+          <label id="dropzone" class="dropzone" for="file">
+            <input type="file" id="file" accept="image/*" required hidden />
+            <img id="preview" class="preview hidden" alt="preview" />
+            <div id="dz-prompt" class="dz-prompt">
+              <svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <path d="M17 8l-5-5-5 5" /><path d="M12 3v12" />
+              </svg>
+              <span><strong>Drag &amp; drop</strong> a photo, or <em>browse</em></span>
+              <small>JPG / PNG / WEBP · up to 10&nbsp;MB</small>
+            </div>
+          </label>
+          <button type="submit" id="scan-submit" class="btn-primary">Analyze</button>
         </form>
         <p id="scan-msg" class="msg"></p>
+
         <div id="result" class="result hidden">
-          <span class="result-label" id="result-label"></span>
-          <span class="result-conf" id="result-conf"></span>
+          <div class="result-head">
+            <span id="result-pill" class="pill">Result</span>
+            <span class="result-label" id="result-label"></span>
+          </div>
+          <div class="conf">
+            <div class="conf-row">
+              <span>Confidence</span><span id="result-conf">0%</span>
+            </div>
+            <div class="conf-track"><div id="result-bar" class="conf-fill"></div></div>
+          </div>
         </div>
       </div>
 
-      <div class="card">
-        <h2>Your scan history</h2>
+      <div class="card glass">
+        <h2 class="card-title">Scan history</h2>
         <ul id="history" class="history"></ul>
       </div>
     </section>
@@ -58,6 +107,6 @@
     <p>⚠️ Educational demo only — not a medical diagnosis. Always consult a dermatologist.</p>
   </footer>
 
-  <script src="/static/app.js?v=0.6.0"></script>
+  <script src="/static/app.js?v=0.7.0"></script>
 </body>
 </html>
