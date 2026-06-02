@@ -2,6 +2,11 @@
 
 [![CI](https://github.com/LakkireddyLakshmi/skin-triage-api/actions/workflows/ci.yml/badge.svg)](https://github.com/LakkireddyLakshmi/skin-triage-api/actions/workflows/ci.yml)
 
+**🔗 Live app: https://skin-triage-api.onrender.com** &nbsp;·&nbsp; [API docs](https://skin-triage-api.onrender.com/docs)
+
+> Hosted on Render's free tier, so the app sleeps when idle — the first request
+> after a nap takes ~30–60s to wake. Same for the model behind it.
+
 A backend that turns a skin-disease classification model into a **real app with user accounts and saved scan history**.
 
 The deep-learning model (a DenseNet-201 + ViT-B16 ensemble, 87.9% test accuracy)
